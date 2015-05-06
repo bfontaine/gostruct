@@ -4,9 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+// some parts of this code are stolen^Winspired from
+//   https://github.com/vrischmann/envconfig
 
 func Fetch(target interface{}, url string) error {
 	doc, err := goquery.NewDocument(url)
@@ -25,7 +29,6 @@ func Populate(target interface{}, doc *goquery.Document) error {
 
 	elem := value.Elem()
 
-	// from https://github.com/vrischmann/envconfig/blob/master/envconfig.go#L38
 	switch elem.Kind() {
 	case reflect.Ptr:
 		elem.Set(reflect.New(elem.Type().Elem()))
@@ -50,7 +53,6 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 
 		subdoc := doc.Find(sel)
 
-		// from https://github.com/vrischmann/envconfig/blob/master/envconfig.go#L87
 	doPopulate:
 		switch field.Kind() {
 		case reflect.Ptr:
@@ -71,10 +73,63 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 	return
 }
 
-func setField(field reflect.Value, doc *goquery.Selection) error {
-	if doc.Length() == 0 {
+func setField(field reflect.Value, doc *goquery.Selection) (err error) {
+	if !field.CanSet() {
+		// unexported field: don't do anything
 		return nil
 	}
 
-	return errors.New("TODO")
+	text := doc.Text()
+
+	switch field.Type().Kind() {
+	case reflect.Bool:
+		err = setBoolValue(field, text)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		err = setIntValue(field, text)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		err = setUintValue(field, text)
+	case reflect.Float32, reflect.Float64:
+		err = setFloatValue(field, text)
+	default:
+		errors.New("TODO")
+	}
+
+	return
+}
+
+func setBoolValue(field reflect.Value, s string) error {
+	// this one is tricky because there are multiple possible interpretations:
+	// - set to true only if there are elements matching the selector
+	// - set to true if the selection's text is not empty (this is what we're
+	//   doing here)
+	// - set to the resulting value of `strconf.ParseBool` called on the
+	//   selection's text
+	field.SetBool(s != "")
+	return nil
+}
+
+func setIntValue(field reflect.Value, s string) error {
+	val, err := strconv.ParseInt(s, 10, 64)
+	if err == nil {
+		field.SetInt(val)
+	}
+
+	return err
+}
+
+func setUintValue(field reflect.Value, s string) error {
+	val, err := strconv.ParseUint(s, 10, 64)
+	if err == nil {
+		field.SetUint(val)
+	}
+
+	return err
+}
+func setFloatValue(field reflect.Value, s string) error {
+	val, err := strconv.ParseFloat(s, 64)
+	if err == nil {
+		field.SetFloat(val)
+	}
+
+	return err
 }
