@@ -90,6 +90,8 @@ func setField(field reflect.Value, doc *goquery.Selection) (err error) {
 		err = setUintValue(field, text)
 	case reflect.Float32, reflect.Float64:
 		err = setFloatValue(field, text)
+	case reflect.String:
+		err = setStringValue(field, text)
 	default:
 		errors.New("TODO")
 	}
@@ -125,6 +127,7 @@ func setUintValue(field reflect.Value, s string) error {
 
 	return err
 }
+
 func setFloatValue(field reflect.Value, s string) error {
 	val, err := strconv.ParseFloat(s, 64)
 	if err == nil {
@@ -132,4 +135,9 @@ func setFloatValue(field reflect.Value, s string) error {
 	}
 
 	return err
+}
+
+func setStringValue(field reflect.Value, s string) error {
+	field.SetString(s)
+	return nil
 }
