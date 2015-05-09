@@ -10,6 +10,8 @@ import (
 	"golang.org/x/net/html"
 )
 
+// helpers
+
 func doc(t *testing.T, body string) *goquery.Document {
 	root, err := html.Parse(strings.NewReader(body))
 	require.Nil(t, err)
@@ -19,6 +21,8 @@ func doc(t *testing.T, body string) *goquery.Document {
 func baseDoc(t *testing.T) *goquery.Document {
 	return doc(t, "<p>hello</p>")
 }
+
+// noop cases
 
 func TestEmptyStruct(t *testing.T) {
 	s := struct{}{}
@@ -43,7 +47,73 @@ func TestUnexportedFieldsStruct(t *testing.T) {
 	assert.Nil(t, Populate(&s, baseDoc(t)))
 }
 
+// wrong arguments
+
 func TestNotAPointer(t *testing.T) {
 	assert.NotNil(t, Populate(struct{}{}, baseDoc(t)))
 	assert.NotNil(t, Populate(42, baseDoc(t)))
+}
+
+// string field
+
+func TestEmptyStringElement(t *testing.T) {
+	s := struct {
+		Title string `gostruct:"#title"`
+	}{"something"}
+
+	assert.Nil(t, Populate(&s, doc(t, `<h1 id="title"></h1>`)))
+	assert.Equal(t, "", s.Title)
+}
+
+func TestStringElement(t *testing.T) {
+	s := struct {
+		Title string `gostruct:"#title"`
+	}{}
+
+	assert.Nil(t, Populate(&s, doc(t, `<h1 id="title">hello</h1>`)))
+	assert.Equal(t, "hello", s.Title)
+}
+
+func TestMultipleStringElements(t *testing.T) {
+	s := struct {
+		Letters string `gostruct:".c"`
+	}{}
+
+	assert.Nil(t, Populate(&s, doc(t, `<p class="c">H</p>x<p class="c">i</p>`)))
+	assert.Equal(t, "Hi", s.Letters)
+}
+
+// bool field
+
+func TestEmptyBoolElement(t *testing.T) {
+	s := struct {
+		Title bool `gostruct:"#title"`
+	}{true}
+
+	d := doc(t, `<h1 id="title"></h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, false, s.Title)
+}
+
+func TestEmptyBoolSelection(t *testing.T) {
+	s := struct {
+		Title bool `gostruct:".foo"`
+	}{}
+
+	d := doc(t, `<h1 id="title">hi</h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, false, s.Title)
+}
+
+func TestBoolElement(t *testing.T) {
+	s := struct {
+		Title bool `gostruct:"#title"`
+	}{}
+
+	d := doc(t, `<h1 id="title">hi</h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, true, s.Title)
 }
