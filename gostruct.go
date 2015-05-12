@@ -73,40 +73,50 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 	return
 }
 
-func setField(field reflect.Value, doc *goquery.Selection) (err error) {
+func setField(field reflect.Value, doc *goquery.Selection) error {
 	if !field.CanSet() {
 		// unexported field: don't do anything
 		return nil
 	}
 
-	text := doc.Text()
+	kind := field.Type().Kind()
 
-	switch field.Type().Kind() {
-	case reflect.Bool:
-		err = setBoolValue(field, text)
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		err = setIntValue(field, text)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		err = setUintValue(field, text)
-	case reflect.Float32, reflect.Float64:
-		err = setFloatValue(field, text)
+	// types which take the whole selection
+	switch kind {
 	case reflect.String:
-		err = setStringValue(field, text)
-	default:
-		errors.New("TODO")
+		return setStringValue(field, doc)
+	case reflect.Bool:
+		return setBoolValue(field, doc)
 	}
 
-	return
+	text := doc.First().Text()
+
+	// types which take only the first element's text
+	switch kind {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return setIntValue(field, text)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return setUintValue(field, text)
+	case reflect.Float32, reflect.Float64:
+		return setFloatValue(field, text)
+	default:
+		return errors.New("TODO")
+	}
 }
 
-func setBoolValue(field reflect.Value, s string) error {
+func setStringValue(field reflect.Value, sel *goquery.Selection) error {
+	field.SetString(sel.Text())
+	return nil
+}
+
+func setBoolValue(field reflect.Value, sel *goquery.Selection) error {
 	// this one is tricky because there are multiple possible interpretations:
 	// - set to true only if there are elements matching the selector
 	// - set to true if the selection's text is not empty (this is what we're
 	//   doing here)
 	// - set to the resulting value of `strconf.ParseBool` called on the
 	//   selection's text
-	field.SetBool(s != "")
+	field.SetBool(sel.Text() != "")
 	return nil
 }
 
@@ -150,9 +160,4 @@ func setFloatValue(field reflect.Value, s string) error {
 	}
 
 	return err
-}
-
-func setStringValue(field reflect.Value, s string) error {
-	field.SetString(s)
-	return nil
 }
