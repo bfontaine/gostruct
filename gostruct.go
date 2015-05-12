@@ -111,6 +111,11 @@ func setBoolValue(field reflect.Value, s string) error {
 }
 
 func setIntValue(field reflect.Value, s string) error {
+	if s == "" {
+		field.SetInt(0)
+		return nil
+	}
+
 	val, err := strconv.ParseInt(s, 10, 64)
 	if err == nil {
 		field.SetInt(val)
@@ -120,6 +125,11 @@ func setIntValue(field reflect.Value, s string) error {
 }
 
 func setUintValue(field reflect.Value, s string) error {
+	if s == "" {
+		field.SetUint(0)
+		return nil
+	}
+
 	val, err := strconv.ParseUint(s, 10, 64)
 	if err == nil {
 		field.SetUint(val)
@@ -129,6 +139,11 @@ func setUintValue(field reflect.Value, s string) error {
 }
 
 func setFloatValue(field reflect.Value, s string) error {
+	if s == "" {
+		field.SetFloat(0)
+		return nil
+	}
+
 	val, err := strconv.ParseFloat(s, 64)
 	if err == nil {
 		field.SetFloat(val)
