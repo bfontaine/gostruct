@@ -117,3 +117,71 @@ func TestBoolElement(t *testing.T) {
 	assert.Nil(t, Populate(&s, d))
 	assert.Equal(t, true, s.Title)
 }
+
+// int field
+
+func TestEmptyIntElement(t *testing.T) {
+	s := struct {
+		Title int `gostruct:"#title"`
+	}{42}
+
+	d := doc(t, `<h1 id="title"></h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, 0, s.Title)
+}
+
+func TestEmptyIntSelection(t *testing.T) {
+	s := struct {
+		Title int `gostruct:".t"`
+	}{42}
+
+	d := doc(t, `<h1 id="title">37</h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, 0, s.Title)
+}
+
+func TestIntWrongValue(t *testing.T) {
+	s := struct {
+		Title int `gostruct:"#title"`
+	}{42}
+
+	d := doc(t, `<h1 id="title">two</h1>`)
+
+	assert.NotNil(t, Populate(&s, d))
+	assert.Equal(t, 42, s.Title, "fields shouldn't be changed on parsing error")
+}
+
+func TestIntMultipleElements(t *testing.T) {
+	s := struct {
+		Count int `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>42</p><p>17</p><p>1034</p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, 42, s.Count, "int fields should only take the first element")
+}
+
+func TestNegativeInt(t *testing.T) {
+	s := struct {
+		Count int `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>-42</p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, -42, s.Count)
+}
+
+func TestInt(t *testing.T) {
+	s := struct {
+		Count int `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>42</p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, 42, s.Count)
+}
