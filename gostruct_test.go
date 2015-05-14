@@ -185,3 +185,61 @@ func TestInt(t *testing.T) {
 	assert.Nil(t, Populate(&s, d))
 	assert.Equal(t, 42, s.Count)
 }
+
+func TestInt8(t *testing.T) {
+	s := struct {
+		Count int8 `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>42</p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, int8(42), s.Count)
+}
+
+// uint field
+
+func TestUintNegativeInt(t *testing.T) {
+	s := struct {
+		Count uint `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>-42</p>`)
+
+	assert.NotNil(t, Populate(&s, d))
+}
+
+func TestUint(t *testing.T) {
+	s := struct {
+		Count uint `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>42</p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, uint(42), s.Count)
+}
+
+// float field
+
+func TestFloatFirstElement(t *testing.T) {
+	s := struct {
+		Count float64 `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>42.6</p><p>25.7</p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, float64(42.6), s.Count)
+}
+
+func TestFloat(t *testing.T) {
+	s := struct {
+		Count float64 `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p>42.6</p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, float64(42.6), s.Count)
+}
