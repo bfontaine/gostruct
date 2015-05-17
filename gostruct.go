@@ -27,11 +27,12 @@ func Fetch(target interface{}, url string) error {
 // Populate fills a struct using the given goquery document. The target must be
 // a pointer on a struct.
 // Types are parsed as follow:
-// - uint, int, float, duration, and string values are parsed from the first
-// element which match the selector
-// - bool values are true if the text from the selection is not empty
-// - slice values are parsed with one slice element per element in the
-// selection.
+//
+//     - uint, int, float, duration, and string values are parsed from the first
+//       element which match the selector
+//     - bool values are true if the text from the selection is not empty
+//     - slice values are parsed with one slice element per element in the
+//       selection.
 func Populate(target interface{}, doc *goquery.Document) error {
 	value := reflect.ValueOf(target)
 
