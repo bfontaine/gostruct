@@ -1,6 +1,9 @@
 package gostruct
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +24,14 @@ func doc(t *testing.T, body string) *goquery.Document {
 
 func baseDoc(t *testing.T) *goquery.Document {
 	return doc(t, "<p>hello</p>")
+}
+
+func makeServer(t *testing.T, body string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			fmt.Fprintln(w, body)
+		}))
 }
 
 // noop cases
@@ -53,6 +64,12 @@ func TestUnexportedFieldsStruct(t *testing.T) {
 func TestNotAPointer(t *testing.T) {
 	assert.NotNil(t, Populate(struct{}{}, baseDoc(t)))
 	assert.NotNil(t, Populate(42, baseDoc(t)))
+}
+
+func TestNotAStructPointer(t *testing.T) {
+	n := 2
+
+	assert.NotNil(t, Populate(&n, baseDoc(t)))
 }
 
 // string field
@@ -200,6 +217,17 @@ func TestInt8(t *testing.T) {
 
 // uint field
 
+func TestEmptyUintElement(t *testing.T) {
+	s := struct {
+		Count uint `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p></p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, uint64(0), s.Count)
+}
+
 func TestUintNegativeInt(t *testing.T) {
 	s := struct {
 		Count uint `gostruct:"p"`
@@ -234,6 +262,17 @@ func TestFloatFirstElement(t *testing.T) {
 	assert.Equal(t, float64(42.6), s.Count)
 }
 
+func TestEmptyFloatElement(t *testing.T) {
+	s := struct {
+		Count float64 `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p></p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, float64(0), s.Count)
+}
+
 func TestFloat(t *testing.T) {
 	s := struct {
 		Count float64 `gostruct:"p"`
@@ -245,7 +284,87 @@ func TestFloat(t *testing.T) {
 	assert.Equal(t, float64(42.6), s.Count)
 }
 
+// sub-structs
+
+func TestEmptySubStruct(t *testing.T) {
+	s := struct {
+		X struct{} `gostruct:"#foo"`
+	}{}
+
+	assert.Nil(t, Populate(&s, doc(t, `<p id="#foo">x</p>`)))
+}
+
+func TestUnexportedSubStruct(t *testing.T) {
+	s := struct {
+		x struct {
+			Foo string `gostruct:"#foo"`
+		} `gostruct:".x"`
+	}{}
+
+	d := doc(t, `<p class="x"><span id="foo">Bar</span></p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, "", s.x.Foo)
+}
+
+func TestSubStruct(t *testing.T) {
+	s := struct {
+		Header struct {
+			Title string `gostruct:"h1"`
+		} `gostruct:"header"`
+	}{}
+
+	d := doc(t, `<header><h1>Good</h1></header><h1>Bad</h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, "Good", s.Header.Title)
+}
+
+func TestSubStructPtr(t *testing.T) {
+	s := struct {
+		Header *struct {
+			Title string `gostruct:"h1"`
+		} `gostruct:"header"`
+	}{}
+
+	d := doc(t, `<header><h1>Good</h1></header><h1>Bad</h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, "Good", s.Header.Title)
+}
+
+// fetching test
+
+func TestFetchWrongURL(t *testing.T) {
+	s := struct{}{}
+
+	assert.NotNil(t, Fetch(&s, "::not an URL"))
+}
+
+func TestFetch(t *testing.T) {
+	server := makeServer(t, `<h1>Hello</h1>`)
+	defer server.Close()
+
+	s := struct {
+		Title string `gostruct:"h1"`
+	}{}
+
+	assert.Nil(t, Fetch(&s, server.URL))
+	assert.Equal(t, "Hello", s.Title)
+}
+
 // general tests
+
+func TestPopulatePointer(t *testing.T) {
+	s := &struct {
+		Title string `gostruct:"h1"`
+	}{}
+
+	d := doc(t, `<h1>This is a test</h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, "This is a test", s.Title)
+}
 
 func TestMultipleFields(t *testing.T) {
 	s := struct {
