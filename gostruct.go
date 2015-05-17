@@ -1,7 +1,6 @@
 package gostruct
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -60,8 +59,6 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 			field.Set(reflect.New(field.Type().Elem()))
 			field = field.Elem()
 			goto doPopulate
-		case reflect.Struct:
-			err = populateStruct(field, subdoc)
 		default:
 			err = setField(field, subdoc)
 		}
@@ -75,7 +72,8 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 }
 
 var (
-	durationType = reflect.TypeOf(new(time.Duration)).Elem()
+	durationType  = reflect.TypeOf(new(time.Duration)).Elem()
+	byteSliceType = reflect.TypeOf([]byte(nil))
 )
 
 func isDurationField(t reflect.Type) bool {
@@ -93,6 +91,13 @@ func setField(field reflect.Value, doc *goquery.Selection) error {
 
 	// types which take the whole selection
 	switch kind {
+	case reflect.Struct:
+		return populateStruct(field, doc)
+	case reflect.Slice:
+		if ftype == byteSliceType {
+			return setByteSliceValue(field, doc)
+		}
+		return setSliceValue(field, doc)
 	case reflect.String:
 		return setStringValue(field, doc)
 	case reflect.Bool:
@@ -115,7 +120,7 @@ func setField(field reflect.Value, doc *goquery.Selection) error {
 	case reflect.Float32, reflect.Float64:
 		return setFloatValue(field, text)
 	default:
-		return errors.New("TODO")
+		return fmt.Errorf("Unsupported field type: '%v'", ftype)
 	}
 }
 
@@ -184,4 +189,46 @@ func setDurationValue(field reflect.Value, s string) error {
 	}
 
 	return err
+}
+
+// this one is like setStringValue except that we convert the string in a byte
+// slice
+func setByteSliceValue(field reflect.Value, sel *goquery.Selection) error {
+	field.SetBytes([]byte(sel.Text()))
+	return nil
+}
+
+func setSliceValue(field reflect.Value, sel *goquery.Selection) error {
+	count := sel.Length()
+
+	eltype := field.Type().Elem()
+	capacity := field.Cap()
+
+	if count > capacity {
+		capacity = count
+	}
+
+	slice := reflect.MakeSlice(field.Type(), 0, capacity)
+
+	var err error
+
+	sel.EachWithBreak(func(i int, subSel *goquery.Selection) bool {
+		el := reflect.New(eltype).Elem()
+
+		if err = setField(el, subSel); err != nil {
+			return false
+		}
+
+		slice = reflect.Append(slice, el)
+
+		return true
+	})
+
+	if err != nil {
+		return err
+	}
+
+	field.Set(slice)
+
+	return nil
 }
