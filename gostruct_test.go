@@ -225,7 +225,7 @@ func TestEmptyUintElement(t *testing.T) {
 	d := doc(t, `<p></p>`)
 
 	assert.Nil(t, Populate(&s, d))
-	assert.Equal(t, uint64(0), s.Count)
+	assert.Equal(t, uint(0), s.Count)
 }
 
 func TestUintNegativeInt(t *testing.T) {
