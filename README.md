@@ -1,6 +1,7 @@
 # gostruct
 
 [![GoDoc](https://godoc.org/github.com/bfontaine/gostruct?status.svg)](https://godoc.org/github.com/bfontaine/gostruct)
+[![Build Status](https://travis-ci.org/bfontaine/gostruct.svg?branch=master)](https://travis-ci.org/bfontaine/gostruct)
 
 **gostruct** populates Go `struct`s from webpages using CSS selectors.
 
