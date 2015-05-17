@@ -1,3 +1,5 @@
+// Package gostruct provides a simple API to populate structs from webpages
+// using CSS selectors.
 package gostruct
 
 import (
@@ -12,6 +14,8 @@ import (
 // some parts of this code are stolen^Winspired from
 //   https://github.com/vrischmann/envconfig
 
+// Fetch fetches a document from an URL and populates the given target, which
+// must be a pointer on a struct. See Populate for the details.
 func Fetch(target interface{}, url string) error {
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
@@ -20,6 +24,14 @@ func Fetch(target interface{}, url string) error {
 	return Populate(target, doc)
 }
 
+// Populate fills a struct using the given goquery document. The target must be
+// a pointer on a struct.
+// Types are parsed as follow:
+// - uint, int, float, duration, and string values are parsed from the first
+// element which match the selector
+// - bool values are true if the text from the selection is not empty
+// - slice values are parsed with one slice element per element in the
+// selection.
 func Populate(target interface{}, doc *goquery.Document) error {
 	value := reflect.ValueOf(target)
 
