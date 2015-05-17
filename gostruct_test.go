@@ -98,7 +98,7 @@ func TestMultipleStringElements(t *testing.T) {
 	}{}
 
 	assert.Nil(t, Populate(&s, doc(t, `<p class="c">H</p>x<p class="c">i</p>`)))
-	assert.Equal(t, "Hi", s.Letters)
+	assert.Equal(t, "H", s.Letters)
 }
 
 // bool field

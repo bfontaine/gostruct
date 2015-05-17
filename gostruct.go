@@ -98,8 +98,6 @@ func setField(field reflect.Value, doc *goquery.Selection) error {
 			return setByteSliceValue(field, doc)
 		}
 		return setSliceValue(field, doc)
-	case reflect.String:
-		return setStringValue(field, doc)
 	case reflect.Bool:
 		return setBoolValue(field, doc)
 	}
@@ -113,6 +111,8 @@ func setField(field reflect.Value, doc *goquery.Selection) error {
 	}
 
 	switch kind {
+	case reflect.String:
+		return setStringValue(field, text)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return setIntValue(field, text)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -124,8 +124,8 @@ func setField(field reflect.Value, doc *goquery.Selection) error {
 	}
 }
 
-func setStringValue(field reflect.Value, sel *goquery.Selection) error {
-	field.SetString(sel.Text())
+func setStringValue(field reflect.Value, s string) error {
+	field.SetString(s)
 	return nil
 }
 
