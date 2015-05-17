@@ -401,6 +401,91 @@ func TestPopulateStringSlice(t *testing.T) {
 	assert.Equal(t, []string{"A", "B", "C"}, s.Names)
 }
 
+func TestPopulateIntSlice(t *testing.T) {
+	s := struct {
+		Nums []int `gostruct:"li"`
+	}{}
+
+	d := doc(t, `<ol><li>1</li><li>2</li><li>3</li></ol>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, []int{1, 2, 3}, s.Nums)
+}
+
+func TestPopulateIntSliceParseError(t *testing.T) {
+	s := struct {
+		Nums []int `gostruct:"li"`
+	}{}
+
+	d := doc(t, `<ol><li>1</li><li>X</li><li>3</li></ol>`)
+
+	assert.NotNil(t, Populate(&s, d))
+}
+
+func TestPopulateStringSliceOverrideContent(t *testing.T) {
+	s := struct {
+		Names []string `gostruct:"li"`
+	}{
+		Names: []string{"X", "Y"},
+	}
+
+	d := doc(t, `<ol><li>A</li><li>B</li><li>C</li></ol>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, []string{"A", "B", "C"}, s.Names)
+}
+
+func TestPopulateStructSlice(t *testing.T) {
+	s := struct {
+		Articles []struct {
+			Authors []string `gostruct:"li"`
+		} `gostruct:"article"`
+	}{}
+
+	d := doc(t, `
+		<ul><li>Home</li><li>Prev</li><li>Next</li><li>Exit</li></ul>
+
+		<article>
+			<h1>Foo</h1>
+			<ol><li>A1</li><li>A2</li></ol>
+		</article>
+
+		<article>
+			<h1>Bat</h1>
+			<ol><li>B1</li><li>B2</li><li>B3</li></ol>
+		</article>
+	`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, 2, len(s.Articles))
+	assert.Equal(t, 2, len(s.Articles[0].Authors))
+	assert.Equal(t, 3, len(s.Articles[1].Authors))
+	assert.Equal(t, []string{"A1", "A2"}, s.Articles[0].Authors)
+}
+
+// skip feature
+
+func TestSkipField(t *testing.T) {
+	s := struct {
+		Title string `gostruct:"-"`
+	}{}
+
+	assert.Nil(t, Populate(&s, baseDoc(t)))
+	assert.Equal(t, "", s.Title)
+}
+
+// misc
+
+func TestUnsupportedField(t *testing.T) {
+	s := struct {
+		Stuff interface{} `gostruct:"h1"`
+	}{}
+
+	d := doc(t, `<h1>xyz</h1>`)
+
+	assert.NotNil(t, Populate(&s, d))
+}
+
 // general tests
 
 func TestPopulatePointer(t *testing.T) {
