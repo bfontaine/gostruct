@@ -353,6 +353,54 @@ func TestFetch(t *testing.T) {
 	assert.Equal(t, "Hello", s.Title)
 }
 
+// byte slice tests
+
+func TestPopulateByteSliceEmptyString(t *testing.T) {
+	s := struct {
+		Title []byte `gostruct:"h1"`
+	}{}
+
+	d := doc(t, `<h1></h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, []byte(""), s.Title)
+}
+
+func TestPopulateByteSlice(t *testing.T) {
+	s := struct {
+		Title []byte `gostruct:"h1"`
+	}{}
+
+	d := doc(t, `<h1>Hello</h1>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, []byte("Hello"), s.Title)
+}
+
+// slice tests
+
+func TestPopulateSliceEmptySelection(t *testing.T) {
+	s := struct {
+		Names []string `gostruct:"li"`
+	}{}
+
+	d := doc(t, `<ol></ol>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, []string{}, s.Names)
+}
+
+func TestPopulateStringSlice(t *testing.T) {
+	s := struct {
+		Names []string `gostruct:"li"`
+	}{}
+
+	d := doc(t, `<ol><li>A</li><li>B</li><li>C</li></ol>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, []string{"A", "B", "C"}, s.Names)
+}
+
 // general tests
 
 func TestPopulatePointer(t *testing.T) {
