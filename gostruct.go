@@ -47,7 +47,7 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 	for i := 0; i < fieldsCount; i++ {
 		field := target.Field(i)
 		sel := targetType.Field(i).Tag.Get("gostruct")
-		if sel == "" {
+		if sel == "" || sel == "-" {
 			continue
 		}
 
