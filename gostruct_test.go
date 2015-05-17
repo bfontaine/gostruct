@@ -3,6 +3,7 @@ package gostruct
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
@@ -242,4 +243,28 @@ func TestFloat(t *testing.T) {
 
 	assert.Nil(t, Populate(&s, d))
 	assert.Equal(t, float64(42.6), s.Count)
+}
+
+// general tests
+
+func TestMultipleFields(t *testing.T) {
+	s := struct {
+		Title  string        `gostruct:"h1"`
+		Desc   string        `gostruct:"p"`
+		PubAge time.Duration `gostruct:".pub-age"`
+	}{}
+
+	d := doc(t, `
+		<h1>This is a test</h1>
+		<p>This is its description</p>
+		<div class="metadata">
+			Author: <a href="/foo">Foo</a><br/>
+			Published <span class="pub-age">1h30m</span> ago.
+		</div>
+	`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, "This is a test", s.Title)
+	assert.Equal(t, "This is its description", s.Desc)
+	assert.Equal(t, "1h30m0s", s.PubAge.String())
 }

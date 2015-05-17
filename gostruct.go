@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -73,13 +74,22 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 	return
 }
 
+var (
+	durationType = reflect.TypeOf(new(time.Duration)).Elem()
+)
+
+func isDurationField(t reflect.Type) bool {
+	return t.AssignableTo(durationType)
+}
+
 func setField(field reflect.Value, doc *goquery.Selection) error {
 	if !field.CanSet() {
 		// unexported field: don't do anything
 		return nil
 	}
 
-	kind := field.Type().Kind()
+	ftype := field.Type()
+	kind := ftype.Kind()
 
 	// types which take the whole selection
 	switch kind {
@@ -92,6 +102,11 @@ func setField(field reflect.Value, doc *goquery.Selection) error {
 	text := doc.First().Text()
 
 	// types which take only the first element's text
+
+	if isDurationField(ftype) {
+		return setDurationValue(field, text)
+	}
+
 	switch kind {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return setIntValue(field, text)
@@ -157,6 +172,15 @@ func setFloatValue(field reflect.Value, s string) error {
 	val, err := strconv.ParseFloat(s, 64)
 	if err == nil {
 		field.SetFloat(val)
+	}
+
+	return err
+}
+
+func setDurationValue(field reflect.Value, s string) error {
+	val, err := time.ParseDuration(s)
+	if err == nil {
+		field.SetInt(int64(val))
 	}
 
 	return err
