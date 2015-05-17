@@ -1,5 +1,7 @@
 # gostruct
 
+[![GoDoc](https://godoc.org/github.com/bfontaine/gostruct?status.svg)](https://godoc.org/github.com/bfontaine/gostruct)
+
 **gostruct** populates Go `struct`s from webpages using CSS selectors.
 
 [goquery]: https://github.com/PuerkitoBio/goquery
