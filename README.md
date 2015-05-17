@@ -1,6 +1,6 @@
 # gostruct
 
-**gostruct** populates Go `struct`s from [goquery][]’s `Document`s.
+**gostruct** populates Go `struct`s from webpages using CSS selectors.
 
 [goquery]: https://github.com/PuerkitoBio/goquery
 
