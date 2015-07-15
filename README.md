@@ -15,8 +15,8 @@
 
 ```go
 type MyStruct struct {
-    Title string `goquery:"#a-selector"`
-    Desc  string `goquery:"h1 .another .one"`
+    Title string `gostruct:"#a-selector"`
+    Desc  string `gostruct:"h1 .another .one"`
 }
 
 var ms MyStruct
