@@ -4,6 +4,7 @@ package gostruct
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 	"strconv"
 	"time"
@@ -18,6 +19,16 @@ import (
 // must be a pointer on a struct. See Populate for the details.
 func Fetch(target interface{}, url string) error {
 	doc, err := goquery.NewDocument(url)
+	if err != nil {
+		return err
+	}
+	return Populate(target, doc)
+}
+
+// PopulateFromResponse fills a struct using the given HTTP response. See
+// Populate for the details.
+func PopulateFromResponse(target interface{}, res *http.Response) error {
+	doc, err := goquery.NewDocumentFromResponse(res)
 	if err != nil {
 		return err
 	}
