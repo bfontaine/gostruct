@@ -215,6 +215,17 @@ func TestInt8(t *testing.T) {
 	assert.Equal(t, int8(42), s.Count)
 }
 
+func TestIntWithSpaces(t *testing.T) {
+	s := struct {
+		Count int `gostruct:"p"`
+	}{}
+
+	d := doc(t, `<p> 42 </p>`)
+
+	assert.Nil(t, Populate(&s, d))
+	assert.Equal(t, 42, s.Count)
+}
+
 // uint field
 
 func TestEmptyUintElement(t *testing.T) {
@@ -470,15 +481,6 @@ func TestStringAttribute(t *testing.T) {
 
 	assert.Nil(t, Populate(&s, doc(t, `<a href="url">text</a>`)))
 	assert.Equal(t, "url", s.URL)
-}
-
-func TestEmptyAttributeName(t *testing.T) {
-	s := struct {
-		URL string `gostruct:"a/"`
-	}{}
-
-	assert.Nil(t, Populate(&s, doc(t, `<a href="url">text</a>`)))
-	assert.Equal(t, "", s.URL)
 }
 
 // skip feature

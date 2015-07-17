@@ -106,8 +106,7 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 
 func extractAttr(sel string) (string, string) {
 	idx := strings.LastIndex(sel, "/")
-	// idx == len(sel)-1 means it's the last char
-	if idx == -1 || idx == len(sel)-1 {
+	if idx == -1 {
 		return sel, ""
 	}
 
@@ -195,7 +194,7 @@ func setIntValue(field reflect.Value, s string) error {
 		return nil
 	}
 
-	val, err := strconv.ParseInt(s, 10, 64)
+	val, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
 	if err == nil {
 		field.SetInt(val)
 	}
@@ -209,7 +208,7 @@ func setUintValue(field reflect.Value, s string) error {
 		return nil
 	}
 
-	val, err := strconv.ParseUint(s, 10, 64)
+	val, err := strconv.ParseUint(strings.TrimSpace(s), 10, 64)
 	if err == nil {
 		field.SetUint(val)
 	}
@@ -223,7 +222,7 @@ func setFloatValue(field reflect.Value, s string) error {
 		return nil
 	}
 
-	val, err := strconv.ParseFloat(s, 64)
+	val, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 	if err == nil {
 		field.SetFloat(val)
 	}
@@ -232,7 +231,7 @@ func setFloatValue(field reflect.Value, s string) error {
 }
 
 func setDurationValue(field reflect.Value, s string) error {
-	val, err := time.ParseDuration(s)
+	val, err := time.ParseDuration(strings.TrimSpace(s))
 	if err == nil {
 		field.SetInt(int64(val))
 	}
