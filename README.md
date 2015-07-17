@@ -24,6 +24,10 @@ var ms MyStruct
 gostruct.Fetch(&ms, "http://www.example.com")
 ```
 
+**gostruct** supports all standard CSS selectors. Additionally, you can end a
+selector with `/foo` to get the `foo` attribute on the selected element. This
+works only on simple values (i.e. not on slices nor structs).
+
 ## Example
 
 The example program below searchs for "golang" on Google and prints the top

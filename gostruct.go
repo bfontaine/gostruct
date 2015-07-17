@@ -45,6 +45,10 @@ func PopulateFromResponse(target interface{}, res *http.Response) error {
 //     - bool values are true if the text from the selection is not empty
 //     - slice values are parsed with one slice element per element in the
 //       selection.
+//
+// If a selector contains a slash, the part after it is assumed to be an
+// attribute name. The attribute's value will then be used instead of the
+// element's content.
 func Populate(target interface{}, doc *goquery.Document) error {
 	value := reflect.ValueOf(target)
 
@@ -102,7 +106,8 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 
 func extractAttr(sel string) (string, string) {
 	idx := strings.LastIndex(sel, "/")
-	if idx == -1 {
+	// idx == len(sel)-1 means it's the last char
+	if idx == -1 || idx == len(sel)-1 {
 		return sel, ""
 	}
 

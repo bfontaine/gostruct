@@ -472,6 +472,15 @@ func TestStringAttribute(t *testing.T) {
 	assert.Equal(t, "url", s.URL)
 }
 
+func TestEmptyAttributeName(t *testing.T) {
+	s := struct {
+		URL string `gostruct:"a/"`
+	}{}
+
+	assert.Nil(t, Populate(&s, doc(t, `<a href="url">text</a>`)))
+	assert.Equal(t, "", s.URL)
+}
+
 // skip feature
 
 func TestSkipField(t *testing.T) {
