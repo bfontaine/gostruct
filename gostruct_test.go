@@ -463,6 +463,15 @@ func TestPopulateStructSlice(t *testing.T) {
 	assert.Equal(t, []string{"A1", "A2"}, s.Articles[0].Authors)
 }
 
+func TestStringAttribute(t *testing.T) {
+	s := struct {
+		URL string `gostruct:"a/href"`
+	}{}
+
+	assert.Nil(t, Populate(&s, doc(t, `<a href="url">text</a>`)))
+	assert.Equal(t, "url", s.URL)
+}
+
 // skip feature
 
 func TestSkipField(t *testing.T) {

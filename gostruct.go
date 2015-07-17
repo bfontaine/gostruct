@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -65,6 +66,8 @@ func Populate(target interface{}, doc *goquery.Document) error {
 }
 
 func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
+	var attr string
+
 	fieldsCount := target.NumField()
 	targetType := target.Type()
 
@@ -75,6 +78,8 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 			continue
 		}
 
+		sel, attr = extractAttr(sel)
+
 		subdoc := doc.Find(sel)
 
 	doPopulate:
@@ -84,7 +89,7 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 			field = field.Elem()
 			goto doPopulate
 		default:
-			err = setField(field, subdoc)
+			err = setField(field, subdoc, attr)
 		}
 
 		if err != nil {
@@ -93,6 +98,15 @@ func populateStruct(target reflect.Value, doc *goquery.Selection) (err error) {
 	}
 
 	return
+}
+
+func extractAttr(sel string) (string, string) {
+	idx := strings.LastIndex(sel, "/")
+	if idx == -1 {
+		return sel, ""
+	}
+
+	return sel[:idx], sel[idx+1:]
 }
 
 var (
@@ -104,7 +118,7 @@ func isDurationField(t reflect.Type) bool {
 	return t.AssignableTo(durationType)
 }
 
-func setField(field reflect.Value, doc *goquery.Selection) error {
+func setField(field reflect.Value, doc *goquery.Selection, attr string) error {
 	if !field.CanSet() {
 		// unexported field: don't do anything
 		return nil
@@ -126,7 +140,13 @@ func setField(field reflect.Value, doc *goquery.Selection) error {
 		return setBoolValue(field, doc)
 	}
 
-	text := doc.First().Text()
+	var text string
+
+	if attr != "" {
+		text, _ = doc.First().Attr(attr)
+	} else {
+		text = doc.First().Text()
+	}
 
 	// types which take only the first element's text
 
@@ -239,7 +259,7 @@ func setSliceValue(field reflect.Value, sel *goquery.Selection) error {
 	sel.EachWithBreak(func(i int, subSel *goquery.Selection) bool {
 		el := reflect.New(eltype).Elem()
 
-		if err = setField(el, subSel); err != nil {
+		if err = setField(el, subSel, ""); err != nil {
 			return false
 		}
 
